@@ -11,7 +11,7 @@ app.use(express.json())
 
 app.use("/api",router)
 
-const PORT = process.env.PORT || 5052;
+const PORT = process.env.PORT || 5003;
 
 connectToDb()
 .then((

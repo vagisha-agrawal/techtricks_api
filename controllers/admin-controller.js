@@ -70,14 +70,17 @@ const getAdminDetails = async (req, res) => {
 
 const updateStallAdmin = async (req, res) => {
   try {
+    let {id} = req.params
     const stallObj = await admin.findByIdAndUpdate(req.params.id, req.body, { new: true })
+
     if (!stallObj) {
-      return res.status(404).json({ error: 'Exhibition not found' });
+      return res.status(404).json({ error: 'Admin not found' });
     }
-    res.status(200).json({ message: "Updated Successfully" });
+    const token = jwt.sign({ id }, process.env.JWT_SECRET);
+    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email:stallObj.email, role: stallObj.role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "" } });
   } catch (error) {
-        res.status(500).json(error);
-    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 
 module.exports = {adminLogin, adminSignup, getAdminDetails, updateStallAdmin}

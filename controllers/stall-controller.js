@@ -92,9 +92,9 @@ const addStall = async (req, res) => {
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    await stall.create(req.body);
+    const createStall = await stall.create(req.body);
 
-    res.status(200).json({ message: "Stall added successfully" });
+    res.status(200).json({ message: "Stall added successfully", data: createStall });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
@@ -131,4 +131,21 @@ const getAllStallByExhibitionId = async (req, res) => {
   }
 }
 
-module.exports = {addStall, getAllStall, getAllStallByExhibitionId}
+const getAllStallByUserId = async (req, res) => {
+  try {
+    const {userid} = req.params
+    const stallsArr = await stall.find();
+    const stalls = stallsArr.filter((v) => v.userId === userid)
+
+    if(stalls.length === 0){
+      return res.status(400).json({message:'Data not Found!'})
+    }
+    
+    return res.status(200).json({message:'Data found', data:stalls})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+}
+
+module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId}

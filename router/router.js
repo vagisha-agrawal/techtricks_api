@@ -6,7 +6,7 @@ const { addExhibition, getExhibition, getExhibitionById, updateExhibitionById } 
 const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin } = require('../controllers/admin-controller');
 
 const authenticateToken = require("../controllers/auth-middleware");
-const { addStall, getAllStall, getAllStallByExhibitionId } = require('../controllers/stall-controller');
+const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId } = require('../controllers/stall-controller');
 
 /* const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -33,6 +33,7 @@ router.route("/get-exhibition/:id").get(getExhibitionById)
 router.route("/add-stall").post(authenticateToken, upload.single('image'), addStall)
 router.route("/get-stalls").get(getAllStall)
 router.route("/get-stalls/:exhibitId").get(getAllStallByExhibitionId)
+router.route("/get-stalls-byuserid/:userid").get(getAllStallByUserId);
 
 router.route("/add-stall-auth").post(adminSignup)
 router.route("/add-auth").post(adminSignup)

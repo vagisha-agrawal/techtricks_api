@@ -5,6 +5,8 @@ const stall = mongoose.Schema({
   image: { type: String },
   stallTitle: { type: String, required: true },
   businessOwner: { type: String },
+  userId : {type: String, required: true},
+  exhibitTitle: {type: String, required: true},
   exhibitId: { type: String, required: true },
   stallType: {type: String, required: true},
   email: { type: String, required: true },

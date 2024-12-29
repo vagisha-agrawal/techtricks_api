@@ -148,4 +148,20 @@ const getAllStallByUserId = async (req, res) => {
   }
 }
 
-module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId}
+const updateStall = async (req, res) => {
+  try {
+    let {id} = req.params
+    const stallObj = await stall.findByIdAndUpdate(id, req.body, { new: true })
+
+    if (!stallObj) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    res.status(200).json({ message: "Updated Successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+}
+
+module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall}

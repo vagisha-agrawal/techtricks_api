@@ -71,7 +71,7 @@ const getAdminDetails = async (req, res) => {
 const updateStallAdmin = async (req, res) => {
   try {
     let {id} = req.params
-    const stallObj = await admin.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    const stallObj = await admin.findByIdAndUpdate(id, req.body, { new: true })
 
     if (!stallObj) {
       return res.status(404).json({ error: 'Admin not found' });

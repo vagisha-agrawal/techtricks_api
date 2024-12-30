@@ -5,48 +5,76 @@ const jwt = require('jsonwebtoken');
 
 const userSignup = async (req, res, next) => {
   try {
-    const { email, password, contactNumber, exhibitId,  stallId } = req.body;
+    const { fullName, email, password, contactNumber, exhibitId, stallId, confirmPassword } = req.body;
 
+    // Validate passwords
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    // Check if email already exists
     const userExists = await user.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password (uncomment this for production)
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new user({ fullName, email, password: hashedPassword, contactNumber, exhibitId,  stallId });
-    await user.save();
+    // Create the new user
+    const newUser = new user({ fullName, email, password, contactNumber, exhibitId, stallId });
 
-    return res.status(201).json({ message: 'User registered successfully.' });
+    // Save the user to the database
+    await newUser.save();
+
+    // Generate JWT token
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+
+    // Return success response with the new user's ID
+    return res.status(201).json({
+      message: 'User registered successfully.',
+      token,
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        stallId: newUser.stallId,
+        exhibitId: newUser.exhibitId,
+        stallId: newUser.exhibitId
+      },
+    });
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred during registration.' });
   }
-}
+};
 
 const userLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
+
     if (!email || !password) {
       return res.status(400).json({ message: 'Please provide both email and password' });
     }
 
-    const user = await user.findOne({ email });
+    const userExist = await user.findOne({ email });
 
-    if (!user) {
-      return res.status(400).json({ message: 'Admin does not exist' });
+    if (!userExist) {
+      return res.status(400).json({ message: 'User does not exist' });
     }
-    const isMatch = await user.comparePassword(password);
+    // const isMatch = await userExist.comparePassword(password);
+    // console.log(isMatch)
     //
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    // if (!isMatch) {
+    //   return res.status(400).json({ message: 'Invalid credentials' });
+    // }
+    const token = jwt.sign({ id: userExist._id }, process.env.JWT_SECRET);
 
-    res.status(200).json({ message: 'Admin Login', token, user: { id: user._id, email:user.email, fullName: user.fullName, stallId: user.stallId, exhibitId: user.exhibitId} });
+    res.status(200).json({ message: 'Admin Login', token, userExist: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} });
 
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({ message: 'Error' });
 
   }
 }
@@ -61,11 +89,23 @@ const getUserDetails = async (req, res) => {
         }
         const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
-        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, stallId: userExist.stallId, exhibitId: userExist.exhibitId} })
+        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} })
 
     } catch (error) {
         res.status(500).json(error);
     }
 }
+const updateExhibition = async (req, res) => {
+    try {
+        const userExist = await user.findByIdAndUpdate(req.params.id, req.body, { new: true })
 
-module.exports = {userSignup, userLogin, getUserDetails}
+        if(!userExist) {
+            return res.status(400).json({message: 'details not exist'})
+        }
+        res.status(200).json({ message: "Updated Successfully", user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+}
+
+module.exports = {userSignup, userLogin, getUserDetails, updateExhibition}

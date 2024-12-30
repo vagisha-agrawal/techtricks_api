@@ -6,7 +6,9 @@ const user = mongoose.Schema({
   password: { type: String, required: true },
   contactNumber : {type: String, required: true},
   exhibitId: { type: String, required: true },
-  stallId : {type: String, required: true},
+  stallId: { type: String, default: '' },
+  businessName : {type: String, default: ''},
+  profession : {type: String, default: ''},
 });
 
 // define the model or the collection name

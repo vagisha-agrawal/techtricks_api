@@ -12,6 +12,7 @@ const stall = mongoose.Schema({
   email: { type: String, required: true },
   contactNumber: { type: String, required: true },
   imageFilename: {type: String},
+  payment:{type: String, required: true},
   paymentDone : {type: Boolean, default: false},
   approve: {type: Boolean, default: false}
 });

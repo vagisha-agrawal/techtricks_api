@@ -7,7 +7,7 @@ const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin } = require('
 
 const authenticateToken = require("../controllers/auth-middleware");
 const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall } = require('../controllers/stall-controller');
-const { getUserDetails, userLogin, userSignup } = require('../controllers/user-contoller');
+const { getUserDetails, userLogin, userSignup, updateExhibition } = require('../controllers/user-contoller');
 
 /* const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -44,8 +44,9 @@ router.route("/admin-login").post(adminLogin)
 router.route("/get-details/:id").get(getAdminDetails)
 router.route("/update-details/:id").put(updateStallAdmin)
 
-router.route("/add-visitor").post(userSignup)
+router.route("/register-visitor").post(userSignup)
 router.route("/login-visitor").post(userLogin)
 router.route("/get-user-details/:id").get(getUserDetails)
+router.route("/attach-exhibition/:id").put(updateExhibition)
 
 module.exports = router;

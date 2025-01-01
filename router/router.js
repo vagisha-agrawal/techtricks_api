@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const multer = require('multer');
-const { addExhibition, getExhibition, getExhibitionById, updateExhibitionById } = require("../controllers/exhibition-controller");
+const { addExhibition, getExhibition, getExhibitionById, updateExhibitionById, filterExhibitionByAddress } = require("../controllers/exhibition-controller");
 const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin } = require('../controllers/admin-controller');
 
 const authenticateToken = require("../controllers/auth-middleware");
@@ -26,10 +26,12 @@ const upload = multer({
 });
 
 
-router.route("/add-exhibition").post(upload.single('image'), addExhibition)
-router.route("/set-password/:id").put(updateExhibitionById)
 router.route("/get-exhibition").get(getExhibition)
 router.route("/get-exhibition/:id").get(getExhibitionById)
+router.route("/filter-exhibition/:venue").get(filterExhibitionByAddress)
+router.route("/add-exhibition").post(upload.single('image'), addExhibition)
+router.route("/set-password/:id").put(updateExhibitionById)
+router.route("/update-exhibition/:id").put(updateExhibitionById)
 
 router.route("/add-stall").post(authenticateToken, upload.single('image'), addStall)
 router.route("/get-stalls").get(getAllStall)

@@ -142,6 +142,22 @@ const getExhibitionById = async (req, res) => {
   }
 }
 
+const filterExhibitionByAddress = async (req, res) => {
+  try {
+    const { venue } = req.params;
+    let arrExist = await exhibition.find();
+    let objExist = arrExist.filter((v)=>v.city.toLowerCase().includes(venue))
+    if (objExist.length) {
+      return res.status(200).json({ message: "data found", data: objExist });
+    } else {
+      return res.status(400).json({ message: "data not found", data: {} });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+}
+
 const updateExhibitionById = async (req, res) => {
   try {
     const exhibitObj = await exhibition.findByIdAndUpdate(req.params.id, req.body, { new: true })
@@ -154,4 +170,4 @@ const updateExhibitionById = async (req, res) => {
   }
 }
 
-module.exports = {addExhibition, getExhibition, getExhibitionById, updateExhibitionById}
+module.exports = {addExhibition, getExhibition, getExhibitionById, updateExhibitionById, filterExhibitionByAddress}

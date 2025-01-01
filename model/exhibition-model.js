@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const exhibition = mongoose.Schema({
   image: { type: String },
   title: { type: String, required: true },
+  city: { type: String, required: true },
   owner: { type: String },
   email: { type: String, default:'' },
   password: { type: String },

@@ -23,6 +23,7 @@ const exhibition = mongoose.Schema({
   contactNumber: { type: String, required: true },
   active: { type: Boolean, default: true },
   imageFilename: { type: String },
+  qrCodeFilename: {type: String},
   publish: { type: Boolean, default: false },
 });
 

@@ -14,6 +14,7 @@ const stall = mongoose.Schema({
   imageFilename: {type: String},
   payment:{type: String, required: true},
   paymentDone : {type: Boolean, default: false},
+  qrCodeFilename: {type: String},
   approve: {type: Boolean, default: false}
 });
 

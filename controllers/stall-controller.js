@@ -11,6 +11,7 @@ const buffer = require("buffer").Buffer;
 const AWS = require("aws-sdk");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const mongoose = require("mongoose");
+const QRCode = require('qrcode');
 
 const s3AWS = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY_ID, // Replace with your Cloudflare R2 Access Key ID
@@ -78,9 +79,24 @@ const uploadFile = async (fileName, fileContent) => {
   }
 };
 
+async function generateQRCodeBase64(obj) {
+  try {
+    // Convert the object to a JSON string
+    const jsonString = JSON.stringify(obj);
+
+    // Generate the QR code as a Base64 string
+    const qrCodeBase64 = await QRCode.toDataURL(jsonString);
+
+    return qrCodeBase64; // Return the Base64 string
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    throw error;
+  }
+}
+
 const addStall = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename } = req.body;
+    const { title, filename, image, imageFilename, email } = req.body;
 
     // Check if place already exists
     // const placeExist = await stall.findOne({ title });
@@ -92,7 +108,17 @@ const addStall = async (req, res) => {
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create(req.body);
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${email}_QR.jpg`});
+
+    generateQRCodeBase64(createStall._id)
+      .then( async (base64) => {
+        console.log("QR Code Base64:");
+        // console.log(base64); // Output the Base64 string
+        await uploadFile(`qrCodes/stall_${email}_QR.jpg`, base64.split(",")[1]);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
 
     res.status(200).json({ message: "Stall added successfully", data: createStall });
   } catch (error) {

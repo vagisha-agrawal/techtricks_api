@@ -12,6 +12,7 @@ const buffer = require("buffer").Buffer;
 const AWS = require("aws-sdk");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const mongoose = require("mongoose");
+const QRCode = require('qrcode');
 
 const s3AWS = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY_ID, // Replace with your Cloudflare R2 Access Key ID
@@ -79,15 +80,30 @@ const uploadFile = async (fileName, fileContent) => {
   }
 };
 
+async function generateQRCodeBase64(obj) {
+  try {
+    // Convert the object to a JSON string
+    const jsonString = JSON.stringify(obj);
+
+    // Generate the QR code as a Base64 string
+    const qrCodeBase64 = await QRCode.toDataURL(jsonString);
+
+    return qrCodeBase64; // Return the Base64 string
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    throw error;
+  }
+}
+
 const addExhibition = async (req, res) => {
   try {
     const { title, filename, image, imageFilename, email } = req.body;
 
     // Check if place already exists
-    // const emailExist = await exhibition.findOne({ email });
-    // if (emailExist) {
-    //   return res.status(400).json({ message: "This username is already exists" });
-    // }
+    const emailExist = await exhibition.findOne({ email });
+    if (emailExist) {
+      return res.status(400).json({ message: "This email is already exists" });
+    }
 
     // Strip out base64 metadata and pass to upload function
     const imageArr = JSON.parse(image)
@@ -97,10 +113,23 @@ const addExhibition = async (req, res) => {
       const filename = `exhibition/${imageFilenameArr[i]}`; // Use corresponding filename
       await uploadFile(filename, base64Data); // Upload the file
     }
+
     
     delete req.body.image;
+    // debugger
     // let obj = {email,}
-    const createdExhibition = await exhibition.create(req.body);
+
+    const createdExhibition = await exhibition.create({...req.body, qrCodeFilename: `qrCodes/${email}_QR.jpg`} );
+    console.log("createdExhibition:- ", createdExhibition)
+    generateQRCodeBase64(createdExhibition._id)
+      .then( async (base64) => {
+        console.log("QR Code Base64:");
+        // console.log(base64); // Output the Base64 string
+        await uploadFile(`qrCodes/${email}_QR.jpg`, base64.split(",")[1]);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
 
     res.status(200).json({ message: "Exhibition place added successfully", exhibitionId: createdExhibition._id });
   } catch (error) {

@@ -84,9 +84,11 @@ const updateStallAdmin = async (req, res) => {
     if (!stallObj) {
       return res.status(404).json({ error: 'Admin not found' });
     }
+
+    let { email, role, stallId } = stallObj
     const token = jwt.sign({ id }, process.env.JWT_SECRET);
     console.log("token:- ", token)
-    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email:stallObj.email, role: stallObj.role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "", exhibitionEmails: stallObj.exhibitionEmails || "" } });
+    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email, role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "", exhibitionEmails: stallObj.exhibitionEmails || "", stallId } });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }

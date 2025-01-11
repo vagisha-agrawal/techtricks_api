@@ -9,15 +9,23 @@ const adminSignup = async (req, res, next) => {
 
     const userExists = await admin.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'Email already exists' });
+      const obj = await admin.findOne({email, role})
+      if(obj) {
+        return res.status(400).json({ message: 'Email already exists' });
+      } else {
+        let objs = [userExists.role.split(',')]
+        objs.push(role)
+        await admin.findByIdAndUpdate(userExists._id,{businessOwner, role: objs.join(',')}, { new: true })
+        return res.status(200).json({ message: 'Admin registered successfully.' });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new admin({ email, password: hashedPassword, role, roleID, businessOwner });
+    const user = new admin({ ...req.body, password: hashedPassword });
     await user.save();
 
-    return res.status(201).json({ message: 'Admin registered successfully.' });
+    return res.status(200).json({ message: 'Admin registered successfully.' });
   } catch (error) {
     res.status(500).json(error);
   }
@@ -43,7 +51,7 @@ const adminLogin = async (req, res, next) => {
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
-    res.status(200).json({ message: 'Admin Login', token, user: { id: user._id, email:user.email, role: user.role, role_id: user.roleID, businessOwner: user.businessOwner || "" } });
+    res.status(200).json({ message: 'Admin Login', token, user: { id: user._id, email:user.email, role: user.role, role_id: user.roleID, businessOwner: user.businessOwner || "", exhibitionEmails: user.exhibitionEmails || "" , stallId: user.stallId} });
 
   } catch (error) {
     res.status(500).json(error);
@@ -53,15 +61,15 @@ const adminLogin = async (req, res, next) => {
 
 const getAdminDetails = async (req, res) => {
     try {
-        const { id } = req.params
-        const adminExist = await admin.findById(id)
+      const { id } = req.params
+      const adminExist = await admin.findById(id)
 
-        if(!adminExist) {
-            return res.status(400).json({message: 'details not exist'})
-        }
-        const token = jwt.sign({ id }, process.env.JWT_SECRET);
+      if(!adminExist) {
+          return res.status(400).json({message: 'details not exist'})
+      }
+      const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
-        return res.status(200).json({message: 'details exist', token, user: { id: adminExist._id, email:adminExist.email, role: adminExist.role, role_id: adminExist.roleID, businessOwner: adminExist.businessOwner || "" } })
+      return res.status(200).json({message: 'details exist', token, user: { id: adminExist._id, email:adminExist.email, role: adminExist.role, role_id: adminExist.roleID, businessOwner: adminExist.businessOwner || "", exhibitionEmails: adminExist.exhibitionEmails || "", stallId: adminExist.stallId } })
 
     } catch (error) {
         res.status(500).json(error);
@@ -77,10 +85,25 @@ const updateStallAdmin = async (req, res) => {
       return res.status(404).json({ error: 'Admin not found' });
     }
     const token = jwt.sign({ id }, process.env.JWT_SECRET);
-    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email:stallObj.email, role: stallObj.role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "" } });
+    console.log("token:- ", token)
+    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email:stallObj.email, role: stallObj.role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "", exhibitionEmails: stallObj.exhibitionEmails || "" } });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
-module.exports = {adminLogin, adminSignup, getAdminDetails, updateStallAdmin}
+const findEmail = async (req, res) => {
+  try {
+    let {email} = req.params
+    const arr = await admin.find()
+    const adminExist = arr.filter((v)=>v.email === email)
+    if(adminExist.length){
+      return res.status(404).json({ error: 'Email already exist' });
+    } 
+    res.status(200).json({message:'Email not found'})
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+module.exports = {adminLogin, adminSignup, getAdminDetails, updateStallAdmin, findEmail}

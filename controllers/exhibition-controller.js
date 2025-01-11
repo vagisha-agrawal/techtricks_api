@@ -97,12 +97,12 @@ async function generateQRCodeBase64(obj) {
 
 const addExhibition = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename, email } = req.body;
+    const { title, filename, image, imageFilename, email, owner, date } = req.body;
 
     // Check if place already exists
-    const emailExist = await exhibition.findOne({ email });
+    const emailExist = await exhibition.findOne({ email, owner, date });
     if (emailExist) {
-      return res.status(400).json({ message: "This email is already exists" });
+      return res.status(400).json({ message: "This email and date is already exists" });
     }
 
     // Strip out base64 metadata and pass to upload function
@@ -120,10 +120,10 @@ const addExhibition = async (req, res) => {
     // let obj = {email,}
 
     const createdExhibition = await exhibition.create({...req.body, qrCodeFilename: `qrCodes/${email}_QR.jpg`} );
-    console.log("createdExhibition:- ", createdExhibition)
+    // console.log("createdExhibition:- ", createdExhibition)
     generateQRCodeBase64(createdExhibition._id)
       .then( async (base64) => {
-        console.log("QR Code Base64:");
+        // console.log("QR Code Base64:");
         // console.log(base64); // Output the Base64 string
         await uploadFile(`qrCodes/${email}_QR.jpg`, base64.split(",")[1]);
       })
@@ -131,7 +131,9 @@ const addExhibition = async (req, res) => {
         console.error("Error:", error);
       });
 
-    res.status(200).json({ message: "Exhibition place added successfully", exhibitionId: createdExhibition._id });
+      console.log(createdExhibition)
+
+    res.status(200).json({ message: "Exhibition place added successfully", exhibitionId: createdExhibition._id, password: createdExhibition.password || 'password not set' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
@@ -171,11 +173,27 @@ const getExhibitionById = async (req, res) => {
   }
 }
 
+const getExhibitionByEmail = async (req, res) => {
+  try {
+    let { email } = req.params
+    let arr = await exhibition.find();
+    let objExist = arr.filter((v)=>v.email === email)
+    if (objExist.length) {
+      return res.status(200).json({ message: "data found", data: objExist });
+    } else {
+      return res.status(400).json({ message: "data not found", data: {} });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+}
+
 const filterExhibitionByAddress = async (req, res) => {
   try {
     const { venue } = req.params;
     let arrExist = await exhibition.find();
-    let objExist = arrExist.filter((v)=>v.city.toLowerCase().includes(venue))
+    let objExist = arrExist.filter((v)=>v.city.toLowerCase().includes(venue.toLowerCase()))
     if (objExist.length) {
       return res.status(200).json({ message: "data found", data: objExist });
     } else {
@@ -199,4 +217,4 @@ const updateExhibitionById = async (req, res) => {
   }
 }
 
-module.exports = {addExhibition, getExhibition, getExhibitionById, updateExhibitionById, filterExhibitionByAddress}
+module.exports = {addExhibition, getExhibition, getExhibitionById, updateExhibitionById, filterExhibitionByAddress, getExhibitionByEmail}

@@ -190,4 +190,21 @@ const updateStall = async (req, res) => {
   }
 }
 
-module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall}
+const getStallByEmails = async (req, res) => {
+  try {
+    let { email } = req.params
+    const arr = await stall.find();
+    const newArr = arr.filter((v)=>v.exhibitionEmail === email || v.stallOwnerEmail === email)
+
+    if(!newArr.length){
+      return res.status(404).json({message: 'No data found'})
+    }
+
+    res.status(200).json({message: 'Data Found', data: newArr})
+
+  } catch (error) {
+
+  }
+}
+
+module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails}

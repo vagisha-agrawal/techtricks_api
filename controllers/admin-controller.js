@@ -31,6 +31,20 @@ const adminSignup = async (req, res, next) => {
   }
 }
 
+const updateExhibitionsInAdmin = async (req, res) => {
+  try {
+    const obj = await admin.findOne({role: 'admin'})
+    if(obj){
+      console.log("object", obj)
+      const { exhibitionEmails } = req.body
+      await admin.findByIdAndUpdate(obj._id, {exhibitionEmails}, { new: true })
+      res.status(200).json({message:"exhibition Email added"})
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
 const adminLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -100,12 +114,12 @@ const findEmail = async (req, res) => {
     const arr = await admin.find()
     const adminExist = arr.filter((v)=>v.email === email)
     if(adminExist.length){
-      return res.status(404).json({ error: 'Email already exist' });
+      return res.status(404).json({ error: 'Email already exist', data: adminExist });
     } 
-    res.status(200).json({message:'Email not found'})
+    res.status(200).json({message:'Email not found', data: []})
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
-module.exports = {adminLogin, adminSignup, getAdminDetails, updateStallAdmin, findEmail}
+module.exports = {adminLogin, adminSignup, getAdminDetails, updateStallAdmin, findEmail, updateExhibitionsInAdmin}

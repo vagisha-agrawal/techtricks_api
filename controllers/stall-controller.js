@@ -12,6 +12,7 @@ const AWS = require("aws-sdk");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const mongoose = require("mongoose");
 const QRCode = require('qrcode');
+const mime = require("mime-types");
 
 const s3AWS = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY_ID, // Replace with your Cloudflare R2 Access Key ID
@@ -53,36 +54,36 @@ const extractContentType = (fileContent) => {
 
 // Example: Uploading a file to R2
 const uploadFile = async (fileName, fileContent) => {
-  // Decode base64 image content
   const bufferContent = Buffer.from(fileContent, "base64");
 
-  // Extract content type dynamically
-  const contentType = extractContentType(fileContent);
+  // Get the MIME type from the file extension
+  const extension = fileName.split(".").pop(); // Extract file extension
+  const contentType = mime.lookup(extension) || "application/octet-stream";
 
-  // Set up params for uploading to S3
+  console.log("contentType:- ", contentType)
+
   const params = {
-    Bucket: BUCKET_NAME, // The bucket name where the file will be uploaded
-    Key: fileName, // File name in the S3 bucket
-    Body: bufferContent, // File content as Buffer
-    ACL: "public-read", // Make the object publicly readable
-    ContentType: contentType, // Dynamically set content type
-    // CacheControl: 'public, max-age=31536000'
+    Bucket: BUCKET_NAME,
+    Key: fileName,
+    Body: bufferContent,
+    ACL: "public-read",
+    ContentType: contentType,
   };
 
   try {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
-    console.log("Image uploaded successfully!");
+    console.log("Uploaded with Content-Type:", contentType);
   } catch (error) {
-    console.error("Error uploading image:", error.message);
-    throw new Error(error.message); // Propagate the error to the calling function
+    console.error("Upload Error:", error.message);
+    throw error;
   }
 };
 
-async function generateQRCodeBase64(obj) {
+async function generateQRCodeBase64(link) {
   try {
     // Convert the object to a JSON string
-    const jsonString = JSON.stringify(obj);
+    const jsonString = link;
 
     // Generate the QR code as a Base64 string
     const qrCodeBase64 = await QRCode.toDataURL(jsonString);
@@ -96,7 +97,7 @@ async function generateQRCodeBase64(obj) {
 
 const addStall = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename, email } = req.body;
+    const { title, filename, image, imageFilename, stallOwnerEmail } = req.body;
 
     // Check if place already exists
     // const placeExist = await stall.findOne({ title });
@@ -108,13 +109,13 @@ const addStall = async (req, res) => {
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${email}_QR.jpg`});
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallOwnerEmail}_QR.jpg`});
 
-    generateQRCodeBase64(createStall._id)
+    generateQRCodeBase64(`${process.env.URL}stall-registeration?stallId=${createStall._id}`)
       .then( async (base64) => {
-        console.log("QR Code Base64:");
+        // console.log("QR Code Base64:");
         // console.log(base64); // Output the Base64 string
-        await uploadFile(`qrCodes/stall_${email}_QR.jpg`, base64.split(",")[1]);
+        await uploadFile(`qrCodes/stall_${stallOwnerEmail}_QR.jpeg`, base64.split(",")[1]);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -138,7 +139,22 @@ const getAllStall = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
   }
-}
+};
+
+const getStallById = async (req, res) => {
+  try {
+    const { id } = req.params
+    const stalls = await stall.findById(id);
+    console.log("stalls:- ", stalls)
+    if(!stalls){
+      return res.status(400).json({message:'Data not Found!'})
+    }
+    return res.status(200).json({message:'Data found', data:stalls})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+};
 
 const getAllStallByExhibitionId = async (req, res) => {
   try {
@@ -177,7 +193,9 @@ const getAllStallByUserId = async (req, res) => {
 const updateStall = async (req, res) => {
   try {
     let {id} = req.params
+    // console.log("id:- ", id)
     const stallObj = await stall.findByIdAndUpdate(id, req.body, { new: true })
+    console.log("stallObj:- ", stallObj)
 
     if (!stallObj) {
       return res.status(404).json({ error: 'Admin not found' });
@@ -207,4 +225,4 @@ const getStallByEmails = async (req, res) => {
   }
 }
 
-module.exports = {addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails}
+module.exports = {addStall, getAllStall, getStallById, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails}

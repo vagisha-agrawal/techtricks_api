@@ -1,7 +1,20 @@
 const user = require("../model/user-model");
+const exhibition = require("../model/exhibition-model");
+const stall = require("../model/stall-model");
 const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const getUsers = async (req, res) => {
+  try {
+    const arr = await user.find()
+    console.log(arr)
+    return res.status(200).json({message: "User Fetched Successfully", data: arr})
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred during registration.' });
+  }
+}
 
 const userSignup = async (req, res, next) => {
   try {
@@ -97,7 +110,9 @@ const getUserDetails = async (req, res) => {
 }
 const updateExhibition = async (req, res) => {
     try {
-        const userExist = await user.findByIdAndUpdate(req.params.id, req.body, { new: true })
+        const { id } = req.params
+        const userExist = await user.findByIdAndUpdate(id, req.body, { new: true })
+        console.log("userExist:- ", userExist)
 
         if(!userExist) {
             return res.status(400).json({message: 'details not exist'})
@@ -108,4 +123,48 @@ const updateExhibition = async (req, res) => {
     }
 }
 
-module.exports = {userSignup, userLogin, getUserDetails, updateExhibition}
+const getVisitorAsPerEmail = async (req, res) => {
+  try {
+    console.log("arr:- ", req.params)
+    const { email } = req.params
+    const Visitor = await user.find()
+    const arr = []
+    Visitor.forEach((v)=>{
+      if(JSON.parse(v.exhibitId).length){
+        JSON.parse(v.exhibitId).map((s)=>{
+          if(s.email === email){
+            arr.push(v)
+          }
+        })
+      }
+    })
+    return res.status(200).json({message:"Fetched", data: arr})
+  } catch (error) {
+    res.status(500).json(error);
+  }
+}
+
+const getAttachedExhibitionAndStallDetails = async ( req, res) => {
+  try {
+    const { id } = req.params
+    const exhibitionDetails = await exhibition.findById(id)
+    if(!exhibitionDetails){
+      return res.status(400).json({ message: "data not found" });
+    }
+
+    console.log("exhibitionDetails:- ", exhibitionDetails)
+
+    const arr = await stall.find();
+    const newArr = arr.filter((v)=>v.exhibitionEmail === exhibitionDetails.email && v.approve === true && v.paymentDone === true)
+    delete exhibitionDetails['stallType']
+    const obj = {exhibitionDetails : exhibitionDetails}
+    obj.exhibitionDetails['stallType'] = JSON.stringify(newArr)
+
+    return res.status(200).json({message: 'Data Found', data : obj})
+
+  } catch (error) {
+    res.status(500).json(error);
+  }
+}
+
+module.exports = {userSignup, userLogin, getUserDetails, updateExhibition, getUsers, getVisitorAsPerEmail, getAttachedExhibitionAndStallDetails}

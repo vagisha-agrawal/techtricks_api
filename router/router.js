@@ -3,11 +3,11 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const { addExhibition, getExhibition, getExhibitionById, updateExhibitionById, filterExhibitionByAddress, getExhibitionByEmail } = require("../controllers/exhibition-controller");
-const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin, findEmail } = require('../controllers/admin-controller');
+const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin, findEmail, updateExhibitionsInAdmin } = require('../controllers/admin-controller');
 
 const authenticateToken = require("../controllers/auth-middleware");
-const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails } = require('../controllers/stall-controller');
-const { getUserDetails, userLogin, userSignup, updateExhibition } = require('../controllers/user-contoller');
+const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails, getStallById } = require('../controllers/stall-controller');
+const { getUserDetails, userLogin, userSignup, updateExhibition, getUsers, getVisitorAsPerEmail, getAttachedExhibitionAndStallDetails } = require('../controllers/user-contoller');
 
 /* const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -36,6 +36,7 @@ router.route("/update-exhibition/:id").put(updateExhibitionById)
 
 router.route("/add-stall").post(authenticateToken, upload.single('image'), addStall)
 router.route("/get-stalls").get(getAllStall)
+router.route("/stall-by-id/:id").get(getStallById)
 router.route("/get-stalls/:exhibitId").get(getAllStallByExhibitionId)
 router.route("/get-stalls-by-email/:email").get(getStallByEmails)
 router.route("/get-stalls-byuserid/:userid").get(getAllStallByUserId);
@@ -43,6 +44,7 @@ router.route("/update-stall/:id").put(updateStall);
 
 router.route("/add-stall-auth").post(adminSignup)
 router.route("/add-auth").post(adminSignup)
+router.route("/add-exhibitEmail-auth").put(updateExhibitionsInAdmin)
 router.route("/verify-email/:email").get(findEmail)
 router.route("/add-exhibition-obj").post(adminSignup)
 router.route("/admin-login").post(adminLogin)
@@ -51,7 +53,10 @@ router.route("/update-details/:id").put(updateStallAdmin)
 
 router.route("/register-visitor").post(userSignup)
 router.route("/login-visitor").post(userLogin)
+router.route("/user-visitor").get(getUsers)
+router.route("/visitor-exhibition-email/:email").get(getVisitorAsPerEmail)
 router.route("/get-user-details/:id").get(getUserDetails)
 router.route("/attach-exhibition/:id").put(updateExhibition)
+router.route("/get-exhibition-details/:id").get(getAttachedExhibitionAndStallDetails)
 
 module.exports = router;

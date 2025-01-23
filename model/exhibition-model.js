@@ -7,7 +7,7 @@ const exhibition = mongoose.Schema({
   businessOrganiserName: { type: String, required: true },
   businessOrganiserCommitee: { type: String, required: true },
   email: { type: String, default:'' },
-  password: { type: String },
+  password: { type: String, default:'' },
   // brandName: { type: String, required: true },
   description: { type: String, required: true },
   tAndC: { type: String },

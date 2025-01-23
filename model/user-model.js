@@ -5,8 +5,8 @@ const user = mongoose.Schema({
   email: {type: String, required: true},
   password: { type: String, required: true },
   contactNumber : {type: String, required: true},
-  exhibitId: { type: String, required: true },
-  stallId: { type: String, default: '' },
+  exhibitId: { type: String, default: "[]" },
+  stallId: { type: String, default: "[]" },
   businessName : {type: String, default: ''},
   profession : {type: String, default: ''},
 });

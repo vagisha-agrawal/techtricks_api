@@ -83,12 +83,41 @@ const userLogin = async (req, res, next) => {
     //   return res.status(400).json({ message: 'Invalid credentials' });
     // }
     const token = jwt.sign({ id: userExist._id }, process.env.JWT_SECRET);
+    const {_id, fullName, exhibitId, stallId} = userExist
 
-    res.status(200).json({ message: 'Admin Login', token, userExist: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} });
+    res.status(200).json({ message: 'Admin Login', token, userExist: { id : _id, email:userExist.email, fullName, exhibitId, stallId} });
 
   } catch (error) {
     res.status(500).json({ message: 'Error' });
+  }
+}
 
+const getRegisteredStalls = async(req, res) => {
+  try {
+    let {registedStall, exhibitionEmail} = req.body
+    console.log(req.body)
+    const arr = JSON.parse(registedStall);
+    const stalls = await stall.find()
+    const stallsArr = stalls.filter((v)=>v.exhibitionEmail === exhibitionEmail)
+
+    const includedObjects = [];
+    const excludedObjects = [];
+
+    for (const obj of stallsArr) {
+      const objIdString = obj._id.toString(); // Convert ObjectId to string for comparison
+      if (arr.includes(objIdString)) {
+        includedObjects.push(obj);
+      } else {
+        excludedObjects.push(obj);
+      }
+    }
+
+    console.log("includedObjects:- ", includedObjects)
+    console.log("excludedObjects:- ", excludedObjects)
+
+    res.status(200).json({message: 'Data', includedObjects, excludedObjects})
+  } catch (error) {
+    res.status(500).json({ message: 'Error' });
   }
 }
 
@@ -102,7 +131,7 @@ const getUserDetails = async (req, res) => {
         }
         const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
-        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} })
+        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.stallId} })
 
     } catch (error) {
         res.status(500).json(error);
@@ -112,7 +141,32 @@ const updateExhibition = async (req, res) => {
     try {
         const { id } = req.params
         const userExist = await user.findByIdAndUpdate(id, req.body, { new: true })
-        console.log("userExist:- ", userExist)
+        let userArr = await user.findById(id)
+          console.log("stallExist")
+        if(req.body.exhibitId){
+          let exhibitArr = JSON.parse(req.body.exhibitId)
+          let exhibitArrLength = JSON.parse(req.body.exhibitId).length
+          const _id = exhibitArr[exhibitArrLength-1].id
+          let exhibitionArr = await exhibition.findOne({ _id: _id })
+
+          let obj = {visitorId:userArr._id, visitorName: userArr.fullName, visitorContact: userArr.contactNumber};
+          let arr = JSON.parse(exhibitionArr.visitors)
+          
+          arr.push(obj)
+          const updated = await exhibition.findByIdAndUpdate(_id, {visitors: JSON.stringify(arr)}, { new: true })
+          console.log("updated :-", updated)
+        } else if (req.body.stallId){
+          let stallArr = JSON.parse(req.body.stallId)
+          let stallArrLength = JSON.parse(req.body.stallId).length
+          const _id = stallArr[stallArrLength-1].stallId
+          let exhibitionArr = await stall.findOne({ _id: _id })
+
+          let obj = {visitorId:userArr._id, visitorName: userArr.fullName, visitorContact: userArr.contactNumber};
+          let arr = JSON.parse(exhibitionArr.visitors)
+          
+          arr.push(obj)
+          const updated = await stall.findByIdAndUpdate(_id, {visitors: JSON.stringify(arr)}, { new: true })
+        }
 
         if(!userExist) {
             return res.status(400).json({message: 'details not exist'})
@@ -152,8 +206,6 @@ const getAttachedExhibitionAndStallDetails = async ( req, res) => {
       return res.status(400).json({ message: "data not found" });
     }
 
-    console.log("exhibitionDetails:- ", exhibitionDetails)
-
     const arr = await stall.find();
     const newArr = arr.filter((v)=>v.exhibitionEmail === exhibitionDetails.email && v.approve === true && v.paymentDone === true)
     delete exhibitionDetails['stallType']
@@ -167,4 +219,4 @@ const getAttachedExhibitionAndStallDetails = async ( req, res) => {
   }
 }
 
-module.exports = {userSignup, userLogin, getUserDetails, updateExhibition, getUsers, getVisitorAsPerEmail, getAttachedExhibitionAndStallDetails}
+module.exports = {userSignup, userLogin, getUserDetails, updateExhibition, getUsers, getVisitorAsPerEmail, getAttachedExhibitionAndStallDetails, getRegisteredStalls}

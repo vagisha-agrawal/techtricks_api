@@ -109,7 +109,7 @@ const addStall = async (req, res) => {
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallOwnerEmail}_QR.jpg`});
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallOwnerEmail}_QR.jpeg`});
 
     generateQRCodeBase64(`${process.env.URL}stall-registeration?stallId=${createStall._id}`)
       .then( async (base64) => {

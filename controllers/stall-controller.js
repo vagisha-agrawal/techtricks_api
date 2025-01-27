@@ -97,10 +97,10 @@ async function generateQRCodeBase64(link) {
 
 const addStall = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename, stallOwnerEmail, exhibitId } = req.body;
+    const { stallTitle, filename, image, imageFilename, stallOwnerEmail, exhibitId, stallType } = req.body;
 
     // Check if place already exists
-    const placeExist = await stall.findOne({ title, stallOwnerEmail, exhibitId });
+    const placeExist = await stall.findOne({ stallTitle, stallOwnerEmail, exhibitId, stallType });
     if (placeExist) {
       return res.status(400).json({ message: "This stall already exists in this exhibition" });
     }

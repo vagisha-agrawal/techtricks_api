@@ -119,14 +119,14 @@ const addExhibition = async (req, res) => {
     // debugger
     // let obj = {email,}
 
-    const createdExhibition = await exhibition.create({...req.body, qrCodeFilename: `qrCodes/${email}_QR.jpg`} );
+    const createdExhibition = await exhibition.create({...req.body, qrCodeFilename: `qrCodes/${title.replaceAll(' ','_')}_${email}_QR.jpg`} );
     // console.log("createdExhibition:- ", createdExhibition)
     // {id: createdExhibition._id, email: createdExhibition.email, title: createdExhibition.title}
     generateQRCodeBase64(`${process.env.URL}registeration?id=${createdExhibition._id}&email=${createdExhibition.email}&title=${createdExhibition.title}`)
       .then( async (base64) => {
         // console.log("QR Code Base64:");
         // console.log(base64); // Output the Base64 string
-        await uploadFile(`qrCodes/${email}_QR.jpg`, base64.split(",")[1]);
+        await uploadFile(`qrCodes/${title.replaceAll(' ','_')}_${email}_QR.jpg`, base64.split(",")[1]);
       })
       .catch((error) => {
         console.error("Error:", error);

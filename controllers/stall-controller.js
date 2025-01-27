@@ -97,25 +97,25 @@ async function generateQRCodeBase64(link) {
 
 const addStall = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename, stallOwnerEmail } = req.body;
+    const { title, filename, image, imageFilename, stallOwnerEmail, exhibitId } = req.body;
 
     // Check if place already exists
-    // const placeExist = await stall.findOne({ title });
-    /* if (placeExist) {
-      return res.status(400).json({ message: "This place already exists" });
-    } */
+    const placeExist = await stall.findOne({ title, stallOwnerEmail, exhibitId });
+    if (placeExist) {
+      return res.status(400).json({ message: "This stall already exists in this exhibition" });
+    }
 
     // Strip out base64 metadata and pass to upload function
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallOwnerEmail}_QR.jpeg`});
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${title}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`});
 
     generateQRCodeBase64(`${process.env.URL}stall-registeration?stallId=${createStall._id}`)
       .then( async (base64) => {
         // console.log("QR Code Base64:");
         // console.log(base64); // Output the Base64 string
-        await uploadFile(`qrCodes/stall_${stallOwnerEmail}_QR.jpeg`, base64.split(",")[1]);
+        await uploadFile(`qrCodes/stall_${title}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`, base64.split(",")[1]);
       })
       .catch((error) => {
         console.error("Error:", error);

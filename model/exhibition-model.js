@@ -25,7 +25,7 @@ const exhibition = mongoose.Schema({
   active: { type: Boolean, default: true },
   imageFilename: { type: String },
   qrCodeFilename: {type: String},
-  visitors: {type: String, default:""},
+  visitors: {type: String, default:"[]"},
   publish: { type: Boolean, default: false },
 });
 

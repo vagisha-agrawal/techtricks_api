@@ -94,11 +94,12 @@ const userLogin = async (req, res, next) => {
 
 const getRegisteredStalls = async(req, res) => {
   try {
-    let {registedStall, exhibitionEmail} = req.body
+    let {registedStall, exhibitionEmail, exhibitionTitle} = req.body
     console.log(req.body)
     const arr = JSON.parse(registedStall);
+    console.log("get registered stalls:- ", arr)
     const stalls = await stall.find()
-    const stallsArr = stalls.filter((v)=>v.exhibitionEmail === exhibitionEmail)
+    const stallsArr = stalls.filter((v)=>v.exhibitionEmail === exhibitionEmail && v.exhibitTitle === exhibitionTitle && v.approve === true && v.paymentDone === true)
 
     const includedObjects = [];
     const excludedObjects = [];
@@ -150,6 +151,7 @@ const updateExhibition = async (req, res) => {
           let exhibitionArr = await exhibition.findOne({ _id: _id })
 
           let obj = {visitorId:userArr._id, visitorName: userArr.fullName, visitorContact: userArr.contactNumber};
+          console.log("req.body.exhibitId:- " ,exhibitionArr)
           let arr = JSON.parse(exhibitionArr.visitors)
           
           arr.push(obj)
@@ -157,6 +159,7 @@ const updateExhibition = async (req, res) => {
           console.log("updated :-", updated)
         } else if (req.body.stallId){
           let stallArr = JSON.parse(req.body.stallId)
+          console.log("req.body.stallId", stallArr)
           let stallArrLength = JSON.parse(req.body.stallId).length
           const _id = stallArr[stallArrLength-1].stallId
           let exhibitionArr = await stall.findOne({ _id: _id })
@@ -171,7 +174,7 @@ const updateExhibition = async (req, res) => {
         if(!userExist) {
             return res.status(400).json({message: 'details not exist'})
         }
-        res.status(200).json({ message: "Updated Successfully", user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.exhibitId} });
+        res.status(200).json({ message: "Updated Successfully", user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.stallId} });
     } catch (error) {
         res.status(500).json(error);
     }
@@ -206,8 +209,10 @@ const getAttachedExhibitionAndStallDetails = async ( req, res) => {
       return res.status(400).json({ message: "data not found" });
     }
 
+    console.log("exhibitionDetails:- ", exhibitionDetails)
+
     const arr = await stall.find();
-    const newArr = arr.filter((v)=>v.exhibitionEmail === exhibitionDetails.email && v.approve === true && v.paymentDone === true)
+    const newArr = arr.filter((v)=>v.exhibitionEmail === exhibitionDetails.email && v.title === exhibitionDetails.title && v.approve === true && v.paymentDone === true)
     delete exhibitionDetails['stallType']
     const obj = {exhibitionDetails : exhibitionDetails}
     obj.exhibitionDetails['stallType'] = JSON.stringify(newArr)

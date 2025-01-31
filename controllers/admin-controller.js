@@ -35,7 +35,6 @@ const updateExhibitionsInAdmin = async (req, res) => {
   try {
     const obj = await admin.findOne({role: 'admin'})
     if(obj){
-      console.log("object", obj)
       const { exhibitionEmails } = req.body
       await admin.findByIdAndUpdate(obj._id, {exhibitionEmails}, { new: true })
       res.status(200).json({message:"exhibition Email added"})
@@ -83,7 +82,7 @@ const getAdminDetails = async (req, res) => {
       }
       const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
-      return res.status(200).json({message: 'details exist', token, user: { id: adminExist._id, email:adminExist.email, role: adminExist.role, role_id: adminExist.roleID, businessOwner: adminExist.businessOwner || "", exhibitionEmails: adminExist.exhibitionEmails || "", stallId: adminExist.stallId } })
+      return res.status(200).json({message: 'details exist', token, user: { id: adminExist._id, email:adminExist.email, role: adminExist.role, role_id: adminExist.roleID, businessOwner: adminExist.businessOwner || "", exhibitionEmails: adminExist.exhibitionEmails || "", stallId: adminExist.stallId, contactNumber: adminExist.contactNumber || "" } })
 
     } catch (error) {
         res.status(500).json(error);
@@ -99,10 +98,9 @@ const updateStallAdmin = async (req, res) => {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    let { email, role, stallId } = stallObj
+    let { email, role, stallId, contactNumber } = stallObj
     const token = jwt.sign({ id }, process.env.JWT_SECRET);
-    console.log("token:- ", token)
-    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email, role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "", exhibitionEmails: stallObj.exhibitionEmails || "", stallId } });
+    res.status(200).json({ message: "Updated Successfully", token, user: { id: stallObj._id, email, role, role_id: stallObj.roleID, businessOwner: stallObj.businessOwner || "", exhibitionEmails: stallObj.exhibitionEmails || "", stallId, contactNumber: stallObj.contactNumber || "" } });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }

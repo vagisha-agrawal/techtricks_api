@@ -1,4 +1,5 @@
 const stall = require("../model/stall-model");
+const exhibition = require("../model/exhibition-model");
 const {
   S3Client,
   PutObjectCommand,
@@ -60,8 +61,6 @@ const uploadFile = async (fileName, fileContent) => {
   const extension = fileName.split(".").pop(); // Extract file extension
   const contentType = mime.lookup(extension) || "application/octet-stream";
 
-  console.log("contentType:- ", contentType)
-
   const params = {
     Bucket: BUCKET_NAME,
     Key: fileName,
@@ -97,7 +96,7 @@ async function generateQRCodeBase64(link) {
 
 const addStall = async (req, res) => {
   try {
-    const { stallTitle, filename, image, imageFilename, stallOwnerEmail, exhibitId, stallType } = req.body;
+    const { stallTitle, filename, image, imageFilename, stallOwnerEmail, exhibitId, stallType, stallNumber } = req.body;
 
     // Check if place already exists
     const placeExist = await stall.findOne({ stallTitle, stallOwnerEmail, exhibitId, stallType });
@@ -105,16 +104,31 @@ const addStall = async (req, res) => {
       return res.status(400).json({ message: "This stall already exists in this exhibition" });
     }
 
+    const obj = await exhibition.find()
+    const exhibitionObj = obj.filter((v)=>v._id.toString() === exhibitId)[0]
+    const exhibitStallArr = JSON.parse(exhibitionObj.stallType).map((v)=>{
+      if(v.stallType === stallType){
+        let stallTypeArr = v.stallQuantity.split(',')
+        let stallNumberArr = stallNumber.split(",")
+        let resultArray = stallTypeArr.filter(item => !stallNumberArr.includes(item));
+        let stallsBookedArr = v.stallsBooked.split(',')
+        v.stallsBooked = !!v.stallsBooked ? [...stallsBookedArr, ...stallNumberArr].join(',') : stallNumberArr.join(',')
+        v.stallQuantity = resultArray.join(',')
+        return v
+      } else {
+        return v
+      }
+    })
+    const exhibitionStallUpdate = await exhibition.findByIdAndUpdate(exhibitId, {stallType : JSON.stringify(exhibitStallArr)}, {new:true})
+
     // Strip out base64 metadata and pass to upload function
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${title}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`});
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallTitle}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`});
 
     generateQRCodeBase64(`${process.env.URL}stall-registeration?stallId=${createStall._id}`)
       .then( async (base64) => {
-        // console.log("QR Code Base64:");
-        // console.log(base64); // Output the Base64 string
         await uploadFile(`qrCodes/stall_${title}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`, base64.split(",")[1]);
       })
       .catch((error) => {
@@ -145,7 +159,6 @@ const getStallById = async (req, res) => {
   try {
     const { id } = req.params
     const stalls = await stall.findById(id);
-    console.log("stalls:- ", stalls)
     if(!stalls){
       return res.status(400).json({message:'Data not Found!'})
     }
@@ -195,7 +208,7 @@ const updateStall = async (req, res) => {
     let {id} = req.params
     // console.log("id:- ", id)
     const stallObj = await stall.findByIdAndUpdate(id, req.body, { new: true })
-    console.log("stallObj:- ", stallObj)
+    // console.log("stallObj:- ", stallObj)
 
     if (!stallObj) {
       return res.status(404).json({ error: 'Admin not found' });
@@ -221,8 +234,51 @@ const getStallByEmails = async (req, res) => {
     res.status(200).json({message: 'Data Found', data: newArr})
 
   } catch (error) {
-
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
   }
 }
 
-module.exports = {addStall, getAllStall, getStallById, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails}
+const getQuantityOfStalls = async (req, res) => {
+  try {
+    const {exhibitArr} = req.body
+
+    if(exhibitArr.length){
+      let array = await exhibition.find();
+      let exhibitionArr = array.filter(v=>exhibitArr.includes(v._id.toString()))
+      const stallArr = []
+      exhibitionArr.forEach((v)=>{
+        let obj = {};
+        obj['id'] = v._id.toString();
+        obj['stall'] = [],
+        // obj['booked'] = [],
+        JSON.parse(v.stallType).forEach((s)=>{
+          let objs = {}
+          objs[s.stallType] = parseInt(s.stallQuantity.split(',').length)
+          objs['booked'] = parseInt(s.stallsBooked.split(',').length)
+          // obj['booked'] = parseInt(s.stallQuantity.split(',').length)
+          if(Object.keys(objs).length){
+            obj.stall.push(objs)
+          }
+        })
+        if(obj.id && obj.stall && obj.stall.length){
+          stallArr.push(obj)
+        }
+      })
+      
+      if(exhibitionArr.length && stallArr.length){
+        return res.status(200).json({message:"array found", data: stallArr})
+      } else {
+        return res.status(200).json({message:"array found", data: []})
+
+      }
+
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" }); // Provide a more generic error message for security reasons
+  }
+}
+
+module.exports = {addStall, getAllStall, getStallById, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails, getQuantityOfStalls}

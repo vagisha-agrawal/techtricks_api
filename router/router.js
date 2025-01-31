@@ -6,7 +6,7 @@ const { addExhibition, getExhibition, getExhibitionById, updateExhibitionById, f
 const { adminSignup, adminLogin, getAdminDetails, updateStallAdmin, findEmail, updateExhibitionsInAdmin } = require('../controllers/admin-controller');
 
 const authenticateToken = require("../controllers/auth-middleware");
-const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails, getStallById } = require('../controllers/stall-controller');
+const { addStall, getAllStall, getAllStallByExhibitionId, getAllStallByUserId, updateStall, getStallByEmails, getStallById, getQuantityOfStalls } = require('../controllers/stall-controller');
 const { getUserDetails, userLogin, userSignup, updateExhibition, getUsers, getVisitorAsPerEmail, getAttachedExhibitionAndStallDetails, getRegisteredStalls } = require('../controllers/user-contoller');
 
 /* const storage = multer.diskStorage({
@@ -59,5 +59,7 @@ router.route("/visitor-exhibition-email/:email").get(getVisitorAsPerEmail)
 router.route("/get-user-details/:id").get(getUserDetails)
 router.route("/attach-exhibition/:id").put(updateExhibition)
 router.route("/get-exhibition-details/:id").get(getAttachedExhibitionAndStallDetails)
+
+router.route("/get-stall-quantity").post(getQuantityOfStalls)
 
 module.exports = router;

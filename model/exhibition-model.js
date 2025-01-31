@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 
 const exhibition = mongoose.Schema({
   image: { type: String },
+  imageFilename: { type: String },
+  floorPlanImage: { type: String },
+  floorPlanImageFilename: { type: String },
   title: { type: String, required: true },
   city: { type: String, required: true },
   businessOrganiserName: { type: String, required: true },
@@ -12,9 +15,9 @@ const exhibition = mongoose.Schema({
   description: { type: String, required: true },
   tAndC: { type: String },
   refundPolicy: { type: String },
-  date: { type: String, required: true },
+  // date: { type: String, required: true },
   startDate: { type: String, required: true },
-  lastDate: { type: String, required: true },
+  lastDate: { type: String, default: '' },
   stallType: { type: String, required: true },
   timing: { type: String, default: "" },
   stallCancellation: { type: String, default: "" },
@@ -23,9 +26,9 @@ const exhibition = mongoose.Schema({
   addressCoordinated: { type: String, required: true },
   contactNumber: { type: String, required: true },
   active: { type: Boolean, default: true },
-  imageFilename: { type: String },
   qrCodeFilename: {type: String},
   visitors: {type: String, default:"[]"},
+  stallsBooked: {type: String, default: "[]"},
   publish: { type: Boolean, default: false },
 });
 

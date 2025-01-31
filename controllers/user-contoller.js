@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 const getUsers = async (req, res) => {
   try {
     const arr = await user.find()
-    console.log(arr)
     return res.status(200).json({message: "User Fetched Successfully", data: arr})
   } catch (error) {
     console.error(error);
@@ -95,9 +94,7 @@ const userLogin = async (req, res, next) => {
 const getRegisteredStalls = async(req, res) => {
   try {
     let {registedStall, exhibitionEmail, exhibitionTitle} = req.body
-    console.log(req.body)
     const arr = JSON.parse(registedStall);
-    console.log("get registered stalls:- ", arr)
     const stalls = await stall.find()
     const stallsArr = stalls.filter((v)=>v.exhibitionEmail === exhibitionEmail && v.exhibitTitle === exhibitionTitle && v.approve === true && v.paymentDone === true)
 
@@ -112,9 +109,6 @@ const getRegisteredStalls = async(req, res) => {
         excludedObjects.push(obj);
       }
     }
-
-    console.log("includedObjects:- ", includedObjects)
-    console.log("excludedObjects:- ", excludedObjects)
 
     res.status(200).json({message: 'Data', includedObjects, excludedObjects})
   } catch (error) {
@@ -132,7 +126,7 @@ const getUserDetails = async (req, res) => {
         }
         const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
-        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.stallId} })
+        return res.status(200).json({message: 'details exist', token, user: { id: userExist._id, email:userExist.email, fullName: userExist.fullName, exhibitId: userExist.exhibitId, stallId: userExist.stallId, contactNumber: userExist.contactNumber} })
 
     } catch (error) {
         res.status(500).json(error);
@@ -143,7 +137,6 @@ const updateExhibition = async (req, res) => {
         const { id } = req.params
         const userExist = await user.findByIdAndUpdate(id, req.body, { new: true })
         let userArr = await user.findById(id)
-          console.log("stallExist")
         if(req.body.exhibitId){
           let exhibitArr = JSON.parse(req.body.exhibitId)
           let exhibitArrLength = JSON.parse(req.body.exhibitId).length
@@ -151,15 +144,14 @@ const updateExhibition = async (req, res) => {
           let exhibitionArr = await exhibition.findOne({ _id: _id })
 
           let obj = {visitorId:userArr._id, visitorName: userArr.fullName, visitorContact: userArr.contactNumber};
-          console.log("req.body.exhibitId:- " ,exhibitionArr)
           let arr = JSON.parse(exhibitionArr.visitors)
-          
-          arr.push(obj)
-          const updated = await exhibition.findByIdAndUpdate(_id, {visitors: JSON.stringify(arr)}, { new: true })
-          console.log("updated :-", updated)
+
+          if(arr.filter((v)=>v.visitorId === obj.visitorId.toString()).length === 0){
+            arr.push(obj)
+            const updated = await exhibition.findByIdAndUpdate(_id, {visitors: JSON.stringify(arr)}, { new: true })
+          }
         } else if (req.body.stallId){
           let stallArr = JSON.parse(req.body.stallId)
-          console.log("req.body.stallId", stallArr)
           let stallArrLength = JSON.parse(req.body.stallId).length
           const _id = stallArr[stallArrLength-1].stallId
           let exhibitionArr = await stall.findOne({ _id: _id })
@@ -182,7 +174,6 @@ const updateExhibition = async (req, res) => {
 
 const getVisitorAsPerEmail = async (req, res) => {
   try {
-    console.log("arr:- ", req.params)
     const { email } = req.params
     const Visitor = await user.find()
     const arr = []
@@ -208,8 +199,6 @@ const getAttachedExhibitionAndStallDetails = async ( req, res) => {
     if(!exhibitionDetails){
       return res.status(400).json({ message: "data not found" });
     }
-
-    console.log("exhibitionDetails:- ", exhibitionDetails)
 
     const arr = await stall.find();
     const newArr = arr.filter((v)=>v.exhibitionEmail === exhibitionDetails.email && v.title === exhibitionDetails.title && v.approve === true && v.paymentDone === true)

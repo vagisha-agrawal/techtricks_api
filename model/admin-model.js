@@ -8,7 +8,8 @@ const admin = mongoose.Schema({
   roleID: { type: String, default: '' },
   stallId: { type: String, default: '[]' },
   businessOwner: {type: String, default: ''},
-  exhibitionEmails : {type: String, default:'[]'}
+  exhibitionEmails : {type: String, default:'[]'},
+  contactNumber : {type: String, default:''}
 });
 
 // define the model or the collection name

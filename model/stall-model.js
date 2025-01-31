@@ -5,6 +5,8 @@ const stall = mongoose.Schema({
   image: { type: String },
   bannerImage: { type: String, default : '' },
   stallTitle: { type: String, required: true },
+  stallQuantity: { type: String, required: true },
+  stallNumber: { type: String, required: true },
   businessOwner: { type: String },
   userId : {type: String, required: true},
   exhibitTitle: {type: String, required: true},

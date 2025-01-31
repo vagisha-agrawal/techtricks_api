@@ -14,6 +14,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const mongoose = require("mongoose");
 const QRCode = require('qrcode');
 const mime = require("mime-types");
+const nodemailer = require('nodemailer');
 
 const s3AWS = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY_ID, // Replace with your Cloudflare R2 Access Key ID
@@ -61,7 +62,6 @@ const uploadFile = async (fileName, fileContent) => {
   const extension = fileName.split(".").pop(); // Extract file extension
   const contentType = mime.lookup(extension) || "application/octet-stream";
 
-  console.log("contentType:- ", contentType)
 
   const params = {
     Bucket: BUCKET_NAME,
@@ -74,7 +74,6 @@ const uploadFile = async (fileName, fileContent) => {
   try {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
-    console.log("Uploaded with Content-Type:", contentType);
   } catch (error) {
     console.error("Upload Error:", error.message);
     throw error;
@@ -98,7 +97,7 @@ async function generateQRCodeBase64(link) {
 
 const addExhibition = async (req, res) => {
   try {
-    const { title, filename, image, imageFilename, email, owner, date, password } = req.body;
+    const { title, filename, image, imageFilename, email, owner, date, password, floorPlanImage, floorPlanImageFilename } = req.body;
 
     // Check if place already exists
     const emailExist = await exhibition.findOne({ email, owner, date, title });
@@ -114,15 +113,23 @@ const addExhibition = async (req, res) => {
       const filename = `exhibition/${imageFilenameArr[i]}`; // Use corresponding filename
       await uploadFile(filename, base64Data); // Upload the file
     }
+    const floorImageArr = JSON.parse(floorPlanImage)
+    const floorImageFilenameArr = JSON.parse(floorPlanImageFilename)
+    for (let i = 0; i < floorImageArr.length; i++) {
+      const base64Data = floorImageArr[i].split(",")[1]; // Strip out base64 metadata
+      const filename = `exhibition/${floorImageFilenameArr[i]}`; // Use corresponding filename
+      await uploadFile(filename, base64Data); // Upload the file
+    }
     
     delete req.body.image;
+    delete req.body.floorPlanImage;
     // debugger
     // let obj = {email,}
 
     const createdExhibition = await exhibition.create({...req.body, qrCodeFilename: `qrCodes/${title.replaceAll(' ','_')}_${email}_QR.jpg`} );
     // console.log("createdExhibition:- ", createdExhibition)
     // {id: createdExhibition._id, email: createdExhibition.email, title: createdExhibition.title}
-    generateQRCodeBase64(`${process.env.URL}registeration?id=${createdExhibition._id}&email=${createdExhibition.email}&title=${createdExhibition.title}`)
+    generateQRCodeBase64(`${process.env.URL}registeration?id=${createdExhibition._id}&email=${createdExhibition.email}&title=${createdExhibition.title.replace(' ','_')}`)
       .then( async (base64) => {
         // console.log("QR Code Base64:");
         // console.log(base64); // Output the Base64 string

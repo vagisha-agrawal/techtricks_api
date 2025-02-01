@@ -2,8 +2,12 @@ const mongoose = require("mongoose");
 
 const stall = mongoose.Schema({
   stallOwnerEmail: {type: String, required: true},
+
   image: { type: String },
-  bannerImage: { type: String, default : '' },
+  imageFilename: {type: String},
+  bannerImage: { type: String },
+  bannerImageFilename: {type: String, default: "[]"},
+
   stallTitle: { type: String, required: true },
   stallQuantity: { type: String, required: true },
   stallNumber: { type: String, required: true },
@@ -14,7 +18,6 @@ const stall = mongoose.Schema({
   stallType: {type: String, required: true},
   exhibitionEmail: { type: String, required: true },
   contactNumber: { type: String, required: true },
-  imageFilename: {type: String},
   payment:{type: String, required: true},
   paymentDone : {type: Boolean, default: false},
   qrCodeFilename: {type: String},

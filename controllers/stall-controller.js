@@ -59,7 +59,7 @@ const uploadFile = async (fileName, fileContent) => {
 
   // Get the MIME type from the file extension
   const extension = fileName.split(".").pop(); // Extract file extension
-  const contentType = mime.lookup(extension) || "application/octet-stream";
+  const contentType = mime.lookup(extension) || "image/jpeg";
 
   const params = {
     Bucket: BUCKET_NAME,
@@ -96,16 +96,28 @@ async function generateQRCodeBase64(link) {
 
 const addStall = async (req, res) => {
   try {
-    const { stallTitle, filename, image, imageFilename, stallOwnerEmail, exhibitId, stallType, stallNumber } = req.body;
+    const { stallTitle, filename, image, imageFilename, stallOwnerEmail, exhibitId, stallType, stallNumber, bannerImage, bannerFilename } = req.body;
 
     // Check if place already exists
     const placeExist = await stall.findOne({ stallTitle, stallOwnerEmail, exhibitId, stallType });
     if (placeExist) {
       return res.status(400).json({ message: "This stall already exists in this exhibition" });
     }
-
+    const timeRange = new Date().getTime()
     const obj = await exhibition.find()
     const exhibitionObj = obj.filter((v)=>v._id.toString() === exhibitId)[0]
+    
+    if(bannerImage.length){
+      console.log("bannerImage:- ", bannerImage)
+      const bannerImageArr = JSON.parse(bannerImage)
+      const bannerImageFilenameArr = JSON.parse(bannerFilename)
+      for (let i = 0; i < bannerImageArr.length; i++) {
+        const base64Data = bannerImageArr[i].split(",")[1]; // Strip out base64 metadata
+        const filename = `stall_banner/${bannerImageFilenameArr[i]}`; // Use corresponding filename
+        await uploadFile(filename, base64Data); // Upload the file
+      }
+    }
+
     const exhibitStallArr = JSON.parse(exhibitionObj.stallType).map((v)=>{
       if(v.stallType === stallType){
         let stallTypeArr = v.stallQuantity.split(',')
@@ -125,11 +137,12 @@ const addStall = async (req, res) => {
     const base64Data = image.split(",")[1];
     await uploadFile(`stall/${imageFilename}`, base64Data);
     delete req.body.image;
-    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallTitle}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`});
+    delete req.body.bannerImage;
+    const createStall = await stall.create({...req.body, qrCodeFilename: `qrCodes/stall_${stallTitle.trim().replaceAll(' ','_')}_${timeRange}_QR.jpeg`});
 
     generateQRCodeBase64(`${process.env.URL}stall-registeration?stallId=${createStall._id}`)
       .then( async (base64) => {
-        await uploadFile(`qrCodes/stall_${title}_${stallOwnerEmail}_${exhibitId}_QR.jpeg`, base64.split(",")[1]);
+        await uploadFile(`qrCodes/stall_${stallTitle.trim().replaceAll(' ','_')}_${timeRange}_QR.jpeg`, base64.split(",")[1]);
       })
       .catch((error) => {
         console.error("Error:", error);

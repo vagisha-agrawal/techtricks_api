@@ -13,7 +13,7 @@ const connectDb = async () => {
         mongoose.connect(URI,{
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            dbName: "event-exhibition",
+            dbName: "tech-tricks",
             authSource: "admin"
         })
         console.log('connected successfully');

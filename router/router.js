@@ -4,13 +4,14 @@ const path = require('path');
 const multer = require('multer');
 
 const authenticateToken = require("../controllers/auth-middleware");
-const { adminSignup } = require('../controllers/admin-controller');
+const { adminSignup, loginAdmin } = require('../controllers/admin-controller');
 const { addCollection, getCollection } = require('../controllers/collection-controller');
 const { getService, addService } = require('../controllers/service-controller');
 
 
 // router.route("/register-user").post(userSignup)
 router.route("/register-admin").post(adminSignup);
+router.route("/login-admin").post(loginAdmin);
 
 router.route("/add-collection").post(addCollection);
 router.route("/get-collection").get(getCollection);

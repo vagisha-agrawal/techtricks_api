@@ -22,7 +22,7 @@ const adminSignup = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the new admin
-    const newAdmin = new admin({ fullName, email, password : hashedPassword});
+    const newAdmin = new admin({ fullName, email, password});
 
     // Save the admin to the database
     await newAdmin.save();
@@ -46,4 +46,31 @@ const adminSignup = async (req, res, next) => {
   }
 };
 
-module.exports = {adminSignup}
+const loginAdmin = async (req, res, next) => {
+  try {
+     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide both email and password' });
+    }
+
+    const user = await admin.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Admin does not exist' });
+    }
+    const isMatch = await user.comparePassword(password);
+    //
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+    res.status(200).json({ message: 'Admin Login', token, user: { id: user._id, email:user.email} });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred during registration.' });
+  }
+};
+
+module.exports = {adminSignup, loginAdmin}

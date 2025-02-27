@@ -35,4 +35,36 @@ const getService = async (req, res) => {
     }
 }
 
-module.exports = {addService, getService}
+const updateService = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const update = await service.findByIdAndUpdate(id,req.body,{new: true})
+
+    if (!update) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    res.status(200).json({ message: "Service updated Successfully", data : update });
+    
+  } catch (err) {
+      return res.status(500).json({ message: 'An error occurred during request.' });
+  }
+};
+
+const deleteService = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const update = await service.findByIdAndDelete(id)
+
+    if (!update) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    res.status(200).json({ message: "Service deleted Successfully" });
+    
+  } catch (err) {
+      return res.status(500).json({ message: 'An error occurred during request.' });
+  }
+};
+
+module.exports = {addService, getService, updateService, deleteService}

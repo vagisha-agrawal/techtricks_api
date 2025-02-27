@@ -5,8 +5,8 @@ const multer = require('multer');
 
 const authenticateToken = require("../controllers/auth-middleware");
 const { adminSignup, loginAdmin } = require('../controllers/admin-controller');
-const { addCollection, getCollection } = require('../controllers/collection-controller');
-const { getService, addService } = require('../controllers/service-controller');
+const { addCollection, getCollection, updateCollection, deleteCollection } = require('../controllers/collection-controller');
+const { getService, addService, deleteService, updateService } = require('../controllers/service-controller');
 
 
 // router.route("/register-user").post(userSignup)
@@ -15,9 +15,13 @@ router.route("/login-admin").post(loginAdmin);
 
 router.route("/add-collection").post(addCollection);
 router.route("/get-collection").get(getCollection);
+router.route("/update-collection/:id").put(updateCollection);
+router.route("/delete-collection/:id").delete(deleteCollection);
 
 router.route("/add-service").post(addService);
 router.route("/get-service").get(getService);
+router.route("/update-service/:id").put(updateService);
+router.route("/delete-service/:id").delete(deleteService);
 
 
 

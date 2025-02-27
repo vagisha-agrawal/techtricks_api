@@ -33,6 +33,38 @@ const getCollection = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ message: 'An error occurred during registration.' });
     }
-}
+};
 
-module.exports = {addCollection, getCollection}
+const updateCollection = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const update = await collection.findByIdAndUpdate(id,req.body,{new: true})
+
+    if (!update) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
+    res.status(200).json({ message: "Collection updated Successfully", data : update });
+    
+  } catch (err) {
+      return res.status(500).json({ message: 'An error occurred during registration.' });
+  }
+};
+
+const deleteCollection = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const update = await collection.findByIdAndDelete(id)
+
+    if (!update) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
+    res.status(200).json({ message: "Collection deleted Successfully" });
+    
+  } catch (err) {
+      return res.status(500).json({ message: 'An error occurred during registration.' });
+  }
+};
+
+module.exports = {addCollection, getCollection, updateCollection, deleteCollection}
